@@ -1,6 +1,7 @@
 package rsa
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -38,20 +39,33 @@ func Encrypt(publicKey []byte, plainText string) (string, error) {
 	}
 	// 类型断言
 	key := x509publicKey.(*rsa.PublicKey)
-	// 对明文进行加密
-	encrypted, err := rsa.EncryptPKCS1v15(rand.Reader, key, []byte(plainText))
-	if err != nil {
-		return "", err
+	// 单次加密的长度需要减掉 padding 的长度，PKCS1 为 11
+	offSet, once := 0, key.Size()-11
+	input := []byte(plainText)
+	srcSize := len(input)
+	buffer := bytes.Buffer{}
+	for offSet < srcSize {
+		endIndex := offSet + once
+		if endIndex > srcSize {
+			endIndex = srcSize
+		}
+		// 分段加密
+		partBytes, err := rsa.EncryptPKCS1v15(rand.Reader, key, input[offSet:endIndex])
+		if err != nil {
+			return "", err
+		}
+		buffer.Write(partBytes)
+		offSet = endIndex
 	}
 	// 返回密文
-	return base64.URLEncoding.EncodeToString(encrypted), nil
+	return base64.URLEncoding.EncodeToString(buffer.Bytes()), nil
 }
 
 // Decrypt RSA 解密
 // cipherText 需要解密的数据
 // privateKey 私钥
 func Decrypt(privateKey []byte, cipherText string) (string, error) {
-	encryptedData, err := base64.URLEncoding.DecodeString(cipherText)
+	input, err := base64.URLEncoding.DecodeString(cipherText)
 	if err != err {
 		return "", err
 	}
@@ -60,11 +74,22 @@ func Decrypt(privateKey []byte, cipherText string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// 对密文进行解密
-	plainText, err := rsa.DecryptPKCS1v15(rand.Reader, x509privateKey, encryptedData)
-	if err != nil {
-		return "", err
+	keySize, srcSize := x509privateKey.Size(), len(input)
+	var offSet = 0
+	var buffer = bytes.Buffer{}
+	for offSet < srcSize {
+		endIndex := offSet + keySize
+		if endIndex > srcSize {
+			endIndex = srcSize
+		}
+		// 对密文进行分段解密
+		partBytes, err := rsa.DecryptPKCS1v15(rand.Reader, x509privateKey, input[offSet:endIndex])
+		if err != nil {
+			return "", err
+		}
+		buffer.Write(partBytes)
+		offSet = endIndex
 	}
 	// 返回明文
-	return string(plainText), nil
+	return string(buffer.Bytes()), nil
 }
