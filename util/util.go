@@ -5,7 +5,9 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"gokins/rsa"
 	"io/ioutil"
+	"net/url"
 	"os"
+	"strings"
 )
 
 const (
@@ -79,4 +81,10 @@ func ReadPublicKey() (publicKey []byte, err error) {
 	}
 	keyBytes, err := ioutil.ReadFile(keyFile)
 	return keyBytes, err
+}
+
+// EncodeURIComponent URL 参数编码，实现和 JS 通用
+func EncodeURIComponent(str string) string {
+	r := url.QueryEscape(str)
+	return strings.Replace(r, "+", "%20", -1)
 }
