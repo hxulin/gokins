@@ -113,41 +113,49 @@ func ReadConfigInfo() (model.SysConfig, error) {
 }
 
 // DecodeConfig 解密配置信息
-func DecodeConfig(model interface{}) {
+func DecodeConfig(ptr interface{}) {
 	// 获取结构体实例的反射类型对象
-	t := reflect.TypeOf(model)
-	v := reflect.ValueOf(model)
+	v := reflect.ValueOf(ptr)
+	// 必须是指针类型
+	if v.Kind() != reflect.Ptr || v.IsNil() {
+		return
+	}
+	t := v.Elem()
 	// 遍历结构体所有成员
 	for i := 0; i < t.NumField(); i++ {
 		// 获取每个成员的结构体字段类型
 		field := t.Field(i)
-		val := v.Field(i).Interface()
-		if field.Type.Kind() == reflect.Struct {
-			DecodeConfig(val)
-		} else if field.Type.Kind() == reflect.Slice {
-			rv := reflect.ValueOf(val)
-			for j := 0; j < rv.Len(); j++ {
-				DecodeConfig(rv.Index(j).Interface())
-			}
-		} else if field.Type.Kind() == reflect.String {
+		//val := v.Field(i).Interface()
 
-			//fmt.Println(field.Name)
-			//reflect.ValueOf(model).Elem().FieldByName(field.Name).SetString("7")
+		fmt.Println(field)
+		//fmt.Println(val)
 
-			//reflect.ValueOf(val).FieldByName(field.Name).SetString("7")
-
-			//reflect.ValueOf(&model).Elem().FieldByName(field.Name).SetString("7")
-
-			//fmt.Println(field.Name)
-			//
-			//t.Elem().FieldByName().Set(reflect.ValueOf(name))
-
-			fmt.Println(field, " : ", val)
-			fmt.Println("---------")
-			//fieldValue := reflect.ValueOf(model).FieldByName(field.Name)
-
-			//fmt.Printf("name: %v , %v\n", field.Name, fieldValue)
-
-		}
+		//if field.Type.Kind() == reflect.Struct {
+		//	DecodeConfig(val)
+		//} else if field.Type.Kind() == reflect.Slice {
+		//	rv := reflect.ValueOf(val)
+		//	for j := 0; j < rv.Len(); j++ {
+		//		DecodeConfig(rv.Index(j).Interface())
+		//	}
+		//} else if field.Type.Kind() == reflect.String {
+		//
+		//	//fmt.Println(field.Name)
+		//	//reflect.ValueOf(ptr).Elem().FieldByName(field.Name).SetString("7")
+		//
+		//	//reflect.ValueOf(val).FieldByName(field.Name).SetString("7")
+		//
+		//	//reflect.ValueOf(&ptr).Elem().FieldByName(field.Name).SetString("7")
+		//
+		//	//fmt.Println(field.Name)
+		//	//
+		//	//t.Elem().FieldByName().Set(reflect.ValueOf(name))
+		//
+		//	fmt.Println(field, " : ", val)
+		//	fmt.Println("---------")
+		//	//fieldValue := reflect.ValueOf(ptr).FieldByName(field.Name)
+		//
+		//	//fmt.Printf("name: %v , %v\n", field.Name, fieldValue)
+		//
+		//}
 	}
 }
