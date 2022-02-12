@@ -3,7 +3,9 @@ package util
 import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
+	"gokins/model"
 	"gokins/rsa"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -87,4 +89,24 @@ func ReadPublicKey() (publicKey []byte, err error) {
 func EncodeURIComponent(str string) string {
 	r := url.QueryEscape(str)
 	return strings.Replace(r, "+", "%20", -1)
+}
+
+// ReadConfigInfo 读取系统配置文件信息
+func ReadConfigInfo() (model.SysConfig, error) {
+	configFile, err := homedir.Expand(configFilePath)
+	if err != nil {
+		fmt.Println("配置文件存储位置初始化失败")
+		return model.SysConfig{}, err
+	}
+	fileBytes, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		fmt.Println("系统配置文件读取失败")
+		return model.SysConfig{}, err
+	}
+	var conf model.SysConfig
+	if err = yaml.Unmarshal(fileBytes, &conf); err != nil {
+		fmt.Println("系统配置文件解析失败")
+		return model.SysConfig{}, err
+	}
+	return conf, err
 }
