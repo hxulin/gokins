@@ -128,19 +128,19 @@ func DecodeConfig(ptr interface{}) {
 	for i := 0; i < t.NumField(); i++ {
 		// 获取每个成员的结构体字段类型
 		field := t.Field(i)
-		//val := v.Field(i).Interface()
+		val := field.Interface()
 
 		//fmt.Println(field)
 		//fmt.Println(val)
 
 		if field.Type().Kind() == reflect.Struct {
-			fmt.Printf("%T", v)
-			DecodeConfig(v)
+			fmt.Printf("%T", field.Interface())
+			DecodeConfig(val)
 		} else if field.Type().Kind() == reflect.Slice {
-			//rv := reflect.ValueOf(val)
-			//for j := 0; j < rv.Len(); j++ {
-			//	DecodeConfig(rv.Index(j).Interface())
-			//}
+			rv := reflect.ValueOf(val)
+			for j := 0; j < rv.Len(); j++ {
+				DecodeConfig(rv.Index(j).Interface())
+			}
 		} else if field.Type().Kind() == reflect.String {
 
 			//fmt.Println(field.Name)
@@ -154,8 +154,8 @@ func DecodeConfig(ptr interface{}) {
 			//
 			//t.Elem().FieldByName().Set(reflect.ValueOf(name))
 
-			//fmt.Println(field, " : ", val)
-			//fmt.Println("---------")
+			fmt.Println(field, " : ", val)
+			fmt.Println("---------")
 			//fieldValue := reflect.ValueOf(ptr).FieldByName(field.Name)
 
 			//fmt.Printf("name: %v , %v\n", field.Name, fieldValue)
