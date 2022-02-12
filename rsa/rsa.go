@@ -40,12 +40,12 @@ func Encrypt(publicKey []byte, plainText string) (string, error) {
 	// 类型断言
 	key := x509publicKey.(*rsa.PublicKey)
 	// 单次加密的长度需要减掉 padding 的长度，PKCS1 为 11
-	offSet, once := 0, key.Size()-11
 	input := []byte(plainText)
+	offSet, onceSize := 0, key.Size()-11
 	srcSize := len(input)
 	buffer := bytes.Buffer{}
 	for offSet < srcSize {
-		endIndex := offSet + once
+		endIndex := offSet + onceSize
 		if endIndex > srcSize {
 			endIndex = srcSize
 		}
@@ -74,11 +74,11 @@ func Decrypt(privateKey []byte, cipherText string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	keySize, srcSize := x509privateKey.Size(), len(input)
-	var offSet = 0
-	var buffer = bytes.Buffer{}
+	offSet, onceSize := 0, x509privateKey.Size()
+	srcSize := len(input)
+	buffer := bytes.Buffer{}
 	for offSet < srcSize {
-		endIndex := offSet + keySize
+		endIndex := offSet + onceSize
 		if endIndex > srcSize {
 			endIndex = srcSize
 		}
