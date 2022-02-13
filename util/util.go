@@ -82,7 +82,17 @@ func ReadPublicKey() (publicKey []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
+	keyFileIsExist, err := KeyFileIsExist()
+	if err != nil {
+		return nil, err
+	}
+	if !keyFileIsExist {
+		CreateSecretKey()
+	}
 	keyBytes, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+
+	}
 	return keyBytes, err
 }
 

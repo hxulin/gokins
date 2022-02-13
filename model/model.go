@@ -1,5 +1,16 @@
 package model
 
+// Auth 权限信息
+type Auth struct {
+	Username string `yaml:"username"`
+	Token    string `yaml:"token"`
+}
+
+// AuthConfig 权限配置信息
+type AuthConfig struct {
+	Auth Auth `yaml:"auth"`
+}
+
 // BuildParamItem 构建参数项
 type BuildParamItem struct {
 	Name  string `json:"name" yaml:"name"`
