@@ -31,11 +31,9 @@ type DeployStatus struct {
 // Job 任务描述
 type Job struct {
 	Id      int              `yaml:"id"`
-	Tag     string           `yaml:"tag"`
 	Name    string           `yaml:"name"`
 	Ack     bool             `yaml:"ack"`
 	AckText string           `yaml:"ack-text"`
-	Remark  string           `yaml:"remark"`
 	Params  []BuildParamItem `yaml:"params"`
 }
 
