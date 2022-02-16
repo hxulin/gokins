@@ -21,7 +21,6 @@ var deployCmd = &cobra.Command{
 			sysConfig, err := util.ReadConfigInfo()
 			if err == nil {
 				// 执行配置信息解密
-				util.DecodeConfig(&sysConfig)
 				jobList := sysConfig.Gokins.Job
 				// 将 job 任务放到 map 中，方便按 id 查找
 				jobMap := make(map[int]model.Job)

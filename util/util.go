@@ -9,91 +9,67 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"reflect"
 	"strings"
 )
 
 const (
 	workspace          = "~/.gokins"
+	authFilePath       = workspace + "/auth.yaml"
 	publicKeyFilePath  = workspace + "/public.bin"
 	privateKeyFilePath = workspace + "/private.bin"
 	configFilePath     = workspace + "/config.yaml"
 )
 
-// FileIsExist 判断文件是否存在，存在返回true，不存在返回false
-func FileIsExist(filename string) bool {
-	var exist = true
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		exist = false
-	}
-	return exist
-}
-
-// KeyFileIsExist 判断密钥文件是否存在，存在返回true，不存在返回false
-func KeyFileIsExist() (bool, error) {
-	publicKeyFile, err := homedir.Expand(publicKeyFilePath)
+// ReadAuthInfo 读取用户名、token等用户鉴权信息
+func ReadAuthInfo() (model.AuthConfig, error) {
+	authConfig := model.AuthConfig{}
+	authFile, err := homedir.Expand(authFilePath)
 	if err != nil {
-		return false, err
+		return authConfig, err
 	}
-	privateKeyFile, err := homedir.Expand(privateKeyFilePath)
+	if !fileIsExist(authFile) {
+		err := SaveAuthInfo(authConfig)
+		if err != nil {
+			return authConfig, err
+		}
+	}
+	authBytes, err := ioutil.ReadFile(authFile)
 	if err != nil {
-		return false, err
+		return authConfig, err
 	}
-	return FileIsExist(publicKeyFile) && FileIsExist(privateKeyFile), nil
+	err = yaml.Unmarshal(authBytes, &authConfig)
+	if err != nil {
+		return authConfig, err
+	}
+	return authConfig, nil
 }
 
-// InitWorkspace 初始化工作目录
-func InitWorkspace() {
-	dir, err := homedir.Expand(workspace)
-	if err == nil && !FileIsExist(dir) {
-		_ = os.MkdirAll(dir, os.ModePerm)
-	}
-}
-
-// CreateSecretKey 创建密钥并保存到文件
-func CreateSecretKey() {
-	publicKeyFile, err1 := homedir.Expand(publicKeyFilePath)
-	privateKeyFile, err2 := homedir.Expand(privateKeyFilePath)
-	if err1 != nil || err2 != nil {
-		fmt.Println("密钥文件存储位置初始化失败")
-		return
+// SaveAuthInfo 保存用户名、token等用户鉴权信息
+func SaveAuthInfo(authConfig model.AuthConfig) error {
+	authFile, err := homedir.Expand(authFilePath)
+	if err != nil {
+		return err
 	}
 	// 初始化工作空间目录
-	InitWorkspace()
-	publicKey, privateKey, err := rsa.GenerateRsaKey(256)
+	initWorkspace()
+	authBytes, _ := yaml.Marshal(authConfig)
+	err = ioutil.WriteFile(authFile, authBytes, os.ModePerm)
 	if err != nil {
-		fmt.Println("密钥生成失败")
-		return
+		return err
 	}
-	err1 = ioutil.WriteFile(publicKeyFile, publicKey, os.ModePerm)
-	err2 = ioutil.WriteFile(privateKeyFile, privateKey, os.ModePerm)
-	if err1 != nil || err2 != nil {
-		fmt.Println("密钥文件创建失败")
-	} else {
-		fmt.Println("密钥初始化完成，已保存到文件：")
-		fmt.Println(publicKeyFile)
-		fmt.Println(privateKeyFile)
-	}
+	return nil
 }
 
-// ReadPublicKey 读取公钥内容
-func ReadPublicKey() (publicKey []byte, err error) {
-	keyFile, err := homedir.Expand(publicKeyFilePath)
+func Encrypt(plainText string) (string, error) {
+	publicKey, err := readPublicKey()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	keyFileIsExist, err := KeyFileIsExist()
+	cipherText, err := rsa.Encrypt(publicKey, plainText)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	if !keyFileIsExist {
-		CreateSecretKey()
-	}
-	keyBytes, err := ioutil.ReadFile(keyFile)
-	if err != nil {
-
-	}
-	return keyBytes, err
+	return cipherText, nil
 }
 
 // EncodeURIComponent URL 参数编码，实现和 JS 通用
@@ -110,6 +86,10 @@ func ReadConfigInfo() (model.SysConfig, error) {
 		return model.SysConfig{}, err
 	}
 	fileBytes, err := ioutil.ReadFile(configFile)
+	// 解密配置信息
+	//string(fileBytes)
+
+	fmt.Println()
 	if err != nil {
 		fmt.Println("系统配置文件读取失败")
 		return model.SysConfig{}, err
@@ -122,54 +102,66 @@ func ReadConfigInfo() (model.SysConfig, error) {
 	return conf, err
 }
 
-// DecodeConfig 解密配置信息
-func DecodeConfig(ptr interface{}) {
-
-	fmt.Println(ptr)
-
-	// 获取结构体实例的反射类型对象
-	v := reflect.ValueOf(ptr)
-	// 必须是指针类型
-	if v.Kind() != reflect.Ptr || v.IsNil() {
-		return
+// 读取公钥内容
+func readPublicKey() ([]byte, error) {
+	keyFile, err := homedir.Expand(publicKeyFilePath)
+	if err != nil {
+		return nil, err
 	}
-	t := v.Elem()
-	// 遍历结构体所有成员
-	for i := 0; i < t.NumField(); i++ {
-		// 获取每个成员的结构体字段类型
-		field := t.Field(i)
-		val := field.Interface()
-
-		//fmt.Println(field)
-		//fmt.Println(val)
-
-		if field.Type().Kind() == reflect.Struct {
-			fmt.Printf("%T", field.Interface())
-			DecodeConfig(val)
-		} else if field.Type().Kind() == reflect.Slice {
-			rv := reflect.ValueOf(val)
-			for j := 0; j < rv.Len(); j++ {
-				DecodeConfig(rv.Index(j).Interface())
-			}
-		} else if field.Type().Kind() == reflect.String {
-
-			//fmt.Println(field.Name)
-			//reflect.ValueOf(ptr).Elem().FieldByName(field.Name).SetString("7")
-
-			//reflect.ValueOf(val).FieldByName(field.Name).SetString("7")
-
-			//reflect.ValueOf(&ptr).Elem().FieldByName(field.Name).SetString("7")
-
-			//fmt.Println(field.Name)
-			//
-			//t.Elem().FieldByName().Set(reflect.ValueOf(name))
-
-			fmt.Println(field, " : ", val)
-			fmt.Println("---------")
-			//fieldValue := reflect.ValueOf(ptr).FieldByName(field.Name)
-
-			//fmt.Printf("name: %v , %v\n", field.Name, fieldValue)
-
-		}
+	err = initSecretKey()
+	if err != nil {
+		return nil, err
 	}
+	keyBytes, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+		return nil, err
+	}
+	return keyBytes, nil
+}
+
+// 初始化密钥
+func initSecretKey() error {
+	publicKeyFile, err := homedir.Expand(publicKeyFilePath)
+	if err != nil {
+		return err
+	}
+	privateKeyFile, err := homedir.Expand(privateKeyFilePath)
+	if err != nil {
+		return err
+	}
+	if fileIsExist(publicKeyFile) && fileIsExist(privateKeyFile) {
+		return nil
+	}
+	// 初始化工作空间目录
+	initWorkspace()
+	publicKey, privateKey, err := rsa.GenerateRsaKey(256)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(publicKeyFile, publicKey, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(privateKeyFile, privateKey, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 初始化工作目录
+func initWorkspace() {
+	dir, err := homedir.Expand(workspace)
+	if err == nil && !fileIsExist(dir) {
+		_ = os.MkdirAll(dir, os.ModePerm)
+	}
+}
+
+// 判断文件是否存在，存在返回true，不存在返回false
+func fileIsExist(filename string) bool {
+	var exist = true
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		exist = false
+	}
+	return exist
 }

@@ -3,8 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"gokins/model"
-	"gopkg.in/yaml.v2"
+	"gokins/util"
 )
 
 var setCmd = &cobra.Command{
@@ -18,10 +17,21 @@ gokins username hxl`,
 gokins username hxl`)
 			return
 		}
-
-		authConfig := model.AuthConfig{Auth: model.Auth{Username: "xx", Token: "xx"}}
-		marshal, _ := yaml.Marshal(authConfig)
-		fmt.Println(string(marshal))
+		authConfig, err := util.ReadAuthInfo()
+		if err != nil {
+			fmt.Println("用户名设置失败")
+			return
+		}
+		cipherText, err := util.Encrypt(args[0])
+		if err != nil {
+			fmt.Println("用户名加密失败")
+			return
+		}
+		authConfig.Auth.Username = cipherText
+		err = util.SaveAuthInfo(authConfig)
+		if err != nil {
+			fmt.Println("用户名设置失败")
+		}
 	},
 }
 
