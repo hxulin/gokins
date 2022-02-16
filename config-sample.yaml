@@ -1,0 +1,15 @@
+gokins:
+  jenkins-url: http://localhost:8080/
+  job:
+    - id: 1005
+      # 配置 jenkins 的任务名称
+      name: test-job
+      # 执行前是否需要确认
+      ack: true
+      # 执行前确认的提示文字
+      ack-text: "此任务将部署生产环境，是否确认部署？(y/N)："
+      params:
+        - name: git_branch
+          value: master
+        - name: maven_cmd
+          value: "clean install"
