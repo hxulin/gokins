@@ -6,7 +6,9 @@ import (
 	"gokins/model"
 	"gokins/rsa"
 	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -60,6 +62,7 @@ func SaveAuthInfo(authConfig model.AuthConfig) error {
 	return nil
 }
 
+// Encrypt 加密文本内容
 func Encrypt(plainText string) (string, error) {
 	publicKey, err := readPublicKey()
 	if err != nil {
@@ -86,10 +89,6 @@ func ReadConfigInfo() (model.SysConfig, error) {
 		return model.SysConfig{}, err
 	}
 	fileBytes, err := ioutil.ReadFile(configFile)
-	// 解密配置信息
-	//string(fileBytes)
-
-	fmt.Println()
 	if err != nil {
 		fmt.Println("系统配置文件读取失败")
 		return model.SysConfig{}, err
@@ -100,6 +99,34 @@ func ReadConfigInfo() (model.SysConfig, error) {
 		return model.SysConfig{}, err
 	}
 	return conf, err
+}
+
+// LoadConfig 加载配置文件
+func LoadConfig(url string) error {
+	// 发起 http Get 请求读取远程配置文件
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+	// 读取响应体
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	configFile, err := homedir.Expand(configFilePath)
+	if err != nil {
+		return err
+	}
+	// 初始化工作空间目录
+	initWorkspace()
+	err = ioutil.WriteFile(configFile, body, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // 读取公钥内容
