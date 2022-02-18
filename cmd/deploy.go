@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/spf13/cobra"
+	"gokins/job"
 	"gokins/model"
 	"gokins/util"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var deployCmd = &cobra.Command{
@@ -39,15 +41,15 @@ gokins deploy 1005`)
 				continue
 			}
 			// 获取 map 数据，ok 表示是否存在
-			job, ok := jobMap[id]
+			task, ok := jobMap[id]
 			if !ok {
 				fmt.Println("无效的任务ID：" + jobId)
 				continue
 			}
-			if job.Ack {
+			if task.Ack {
 				ackText := "是否确认部署？(y/N)："
-				if len(job.AckText) > 0 {
-					ackText = job.AckText
+				if len(task.AckText) > 0 {
+					ackText = task.AckText
 				}
 				fmt.Print(ackText)
 				// 二次确认，读取用户输入信息
@@ -62,9 +64,39 @@ gokins deploy 1005`)
 					continue
 				}
 			}
-			fmt.Println(job)
-			//fmt.Println("无效的任务ID：" + jobId)
-			//fmt.Println(int())
+			baseUrl := sysConfig.Gokins.JenkinsUrl
+			if !strings.HasPrefix(baseUrl, "http://") && !strings.HasPrefix(baseUrl, "https://") {
+				fmt.Println("Jenkins地址配置错误")
+				return
+			}
+			if !strings.HasSuffix(baseUrl, "/") {
+				baseUrl += "/"
+			}
+			buildUrl := baseUrl + "job/" + task.Name + "/build"
+			queryStatusUrl := baseUrl + "job/" + task.Name + "/lastBuild/api/json"
+			// 读取用户名和token配置信息
+			authConfig, err := util.ReadAuthInfo()
+			if err != nil {
+				fmt.Println("用户名和token信息读取失败")
+				return
+			}
+			username, err := util.Decrypt(authConfig.Auth.Username)
+			if err != nil {
+				fmt.Println("用户名解密失败")
+				return
+			}
+			token, err := util.Decrypt(authConfig.Auth.Token)
+			if err != nil {
+				fmt.Println("token信息解密失败")
+				return
+			}
+			// 查询任务状态
+			_, err = job.QueryCurrentJobBuildParam(queryStatusUrl, username, token)
+
+			fmt.Println(username, token)
+			fmt.Println(buildUrl)
+			fmt.Println(queryStatusUrl)
+			//job.Build()
 		}
 	},
 }

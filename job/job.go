@@ -5,14 +5,41 @@ import (
 	"encoding/json"
 	"fmt"
 	"gokins/model"
-	"gokins/util"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
-func QueryDeployStatus(queryUrl string, username string, token string) error {
+// QueryBuildStatus 查询任务构建状态
+func QueryBuildStatus(queryUrl string, username string, token string) (string, error) {
+	buildStatus, err := queryBuildStatus(queryUrl, username, token)
+	if err != nil {
+		return "", err
+	}
+	for _, action := range buildStatus.Actions {
+		if action.ClassName == "hudson.model.ParametersAction" {
 
-	return nil
+			fmt.Println(action.Parameters)
+			break
+		}
+	}
+
+	return "", nil
+}
+
+// QueryCurrentJobBuildParam 查询当前任务的构建参数
+func QueryCurrentJobBuildParam(queryUrl string, username string, token string) ([]model.BuildParamItem, error) {
+	buildStatus, err := queryBuildStatus(queryUrl, username, token)
+	if err != nil {
+		return nil, err
+	}
+	for _, action := range buildStatus.Actions {
+		if action.ClassName == "hudson.model.ParametersAction" {
+			return action.Parameters, err
+		}
+	}
+	return nil, nil
 }
 
 func Build(buildUrl string, param model.BuildParam, username string, token string) error {
@@ -27,7 +54,7 @@ func Build(buildUrl string, param model.BuildParam, username string, token strin
 	//}}
 	paramStr, _ := json.Marshal(param)
 	fmt.Println(string(paramStr))
-	req, err := http.NewRequest("POST", buildUrl, strings.NewReader("json="+util.EncodeURIComponent(string(paramStr))))
+	req, err := http.NewRequest(http.MethodPost, buildUrl, strings.NewReader("json="+encodeURIComponent(string(paramStr))))
 	if err != nil {
 		return err
 	}
@@ -39,4 +66,39 @@ func Build(buildUrl string, param model.BuildParam, username string, token strin
 		return err
 	}
 	return nil
+}
+
+// URL 参数编码，实现和 JS 通用
+func encodeURIComponent(str string) string {
+	r := url.QueryEscape(str)
+	return strings.Replace(r, "+", "%20", -1)
+}
+
+// 查询任务构建状态
+func queryBuildStatus(queryUrl string, username string, token string) (model.BuildStatus, error) {
+	buildStatus := model.BuildStatus{}
+	client := http.Client{}
+	req, err := http.NewRequest(http.MethodGet, queryUrl, nil)
+	if err != nil {
+		return buildStatus, err
+	}
+	// 添加请求头
+	auth := []byte(username + ":" + token)
+	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString(auth))
+	req.Header.Set("Content-type", "application/json;charset=utf-8")
+	// 发送请求
+	resp, err := client.Do(req)
+	if err != nil {
+		return buildStatus, err
+	}
+	defer resp.Body.Close()
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return buildStatus, err
+	}
+	err = json.Unmarshal(respBytes, &buildStatus)
+	if err != nil {
+		return buildStatus, err
+	}
+	return buildStatus, nil
 }

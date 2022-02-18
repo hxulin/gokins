@@ -17,17 +17,6 @@ type BuildParamItem struct {
 	Value string `json:"value" yaml:"value"`
 }
 
-// BuildParam 构建参数
-type BuildParam struct {
-	Parameter []BuildParamItem `json:"parameter"`
-}
-
-// DeployStatus 部署状态
-type DeployStatus struct {
-	Building bool   `json:"building"`
-	Result   string `json:"result"`
-}
-
 // Job 任务描述
 type Job struct {
 	Id      int              `yaml:"id"`
@@ -48,4 +37,21 @@ type Gokins struct {
 // SysConfig 系统配置
 type SysConfig struct {
 	Gokins Gokins `yaml:"gokins"`
+}
+
+// BuildParam 构建参数
+type BuildParam struct {
+	Parameter []BuildParamItem `json:"parameter"`
+}
+
+type Action struct {
+	ClassName  string           `json:"_class"`
+	Parameters []BuildParamItem `json:"parameters"`
+}
+
+// BuildStatus 部署状态
+type BuildStatus struct {
+	Actions  []Action `json:"actions"`
+	Building bool     `json:"building"`
+	Result   string   `json:"result"`
 }

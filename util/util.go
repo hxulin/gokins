@@ -9,9 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 )
 
 const (
@@ -86,12 +84,6 @@ func Decrypt(cipherText string) (string, error) {
 		return "", err
 	}
 	return plainText, nil
-}
-
-// EncodeURIComponent URL 参数编码，实现和 JS 通用
-func EncodeURIComponent(str string) string {
-	r := url.QueryEscape(str)
-	return strings.Replace(r, "+", "%20", -1)
 }
 
 // ReadConfigInfo 读取系统配置文件信息
