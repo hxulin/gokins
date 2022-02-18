@@ -75,6 +75,19 @@ func Encrypt(plainText string) (string, error) {
 	return cipherText, nil
 }
 
+// Decrypt 解密文本内容
+func Decrypt(cipherText string) (string, error) {
+	privateKey, err := readPrivateKey()
+	if err != nil {
+		return "", err
+	}
+	plainText, err := rsa.Decrypt(privateKey, cipherText)
+	if err != nil {
+		return "", err
+	}
+	return plainText, nil
+}
+
 // EncodeURIComponent URL 参数编码，实现和 JS 通用
 func EncodeURIComponent(str string) string {
 	r := url.QueryEscape(str)
@@ -90,7 +103,7 @@ func ReadConfigInfo() (model.SysConfig, error) {
 	}
 	fileBytes, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Println("系统配置文件读取失败")
+		fmt.Println("系统配置文件读取失败，请尝试使用load命名加载配置文件")
 		return model.SysConfig{}, err
 	}
 	var conf model.SysConfig
@@ -132,6 +145,23 @@ func LoadConfig(url string) error {
 // 读取公钥内容
 func readPublicKey() ([]byte, error) {
 	keyFile, err := homedir.Expand(publicKeyFilePath)
+	if err != nil {
+		return nil, err
+	}
+	err = initSecretKey()
+	if err != nil {
+		return nil, err
+	}
+	keyBytes, err := ioutil.ReadFile(keyFile)
+	if err != nil {
+		return nil, err
+	}
+	return keyBytes, nil
+}
+
+// 读取私钥内容
+func readPrivateKey() ([]byte, error) {
+	keyFile, err := homedir.Expand(privateKeyFilePath)
 	if err != nil {
 		return nil, err
 	}
