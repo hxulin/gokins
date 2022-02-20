@@ -13,8 +13,8 @@ type AuthConfig struct {
 
 // BuildParamItem 构建参数项
 type BuildParamItem struct {
-	Name  string `json:"name" yaml:"name"`
-	Value string `json:"value" yaml:"value"`
+	Name  string      `json:"name" yaml:"name"`
+	Value interface{} `json:"value" yaml:"value"`
 }
 
 // Job 任务描述
