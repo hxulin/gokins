@@ -91,8 +91,10 @@ gokins deploy 1005`)
 				return
 			}
 			// 查询任务状态
-			_, err = job.QueryCurrentJobBuildParam(queryStatusUrl, username, token)
+			buildParams, err := job.QueryCurrentJobBuildParam(queryStatusUrl, username, token)
 
+			fmt.Println(job.QueryBuildStatus(queryStatusUrl, username, token))
+			fmt.Println(buildParams)
 			fmt.Println(username, token)
 			fmt.Println(buildUrl)
 			fmt.Println(queryStatusUrl)

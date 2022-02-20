@@ -11,21 +11,27 @@ import (
 	"strings"
 )
 
+// Building 任务构建中
+// Success 任务构建成功
+// Failure 任务构建失败
+// Aborted 用户终止构建
+const (
+	Building = "BUILDING"
+	Success  = "SUCCESS"
+	Failure  = "FAILURE"
+	Aborted  = "ABORTED"
+)
+
 // QueryBuildStatus 查询任务构建状态
 func QueryBuildStatus(queryUrl string, username string, token string) (string, error) {
 	buildStatus, err := queryBuildStatus(queryUrl, username, token)
 	if err != nil {
 		return "", err
 	}
-	for _, action := range buildStatus.Actions {
-		if action.ClassName == "hudson.model.ParametersAction" {
-
-			fmt.Println(action.Parameters)
-			break
-		}
+	if buildStatus.Building {
+		return Building, nil
 	}
-
-	return "", nil
+	return buildStatus.Result, nil
 }
 
 // QueryCurrentJobBuildParam 查询当前任务的构建参数
