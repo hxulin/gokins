@@ -22,30 +22,31 @@ const (
 	Aborted  = "ABORTED"
 )
 
-// QueryBuildStatus 查询任务构建状态
-func QueryBuildStatus(queryUrl string, username string, token string) (string, error) {
+// QueryBuildStatus 查询任务的构建状态
+func QueryBuildStatus(queryUrl string, username string, token string) (model.BuildStatus, error) {
 	buildStatus, err := queryBuildStatus(queryUrl, username, token)
 	if err != nil {
-		return "", err
+		return model.BuildStatus{}, err
 	}
-	if buildStatus.Building {
-		return Building, nil
-	}
-	return buildStatus.Result, nil
+	return buildStatus, nil
 }
 
-// QueryCurrentJobBuildParam 查询当前任务的构建参数
-func QueryCurrentJobBuildParam(queryUrl string, username string, token string) ([]model.BuildParamItem, error) {
-	buildStatus, err := queryBuildStatus(queryUrl, username, token)
-	if err != nil {
-		return nil, err
+// ParseBuildStatus 解析任务的构建状态
+func ParseBuildStatus(buildStatus model.BuildStatus) string {
+	if buildStatus.Building {
+		return Building
 	}
+	return buildStatus.Result
+}
+
+// ParseCurrentJobBuildParam 解析任务的构建参数
+func ParseCurrentJobBuildParam(buildStatus model.BuildStatus) []model.BuildParamItem {
 	for _, action := range buildStatus.Actions {
 		if action.ClassName == "hudson.model.ParametersAction" {
-			return action.Parameters, err
+			return action.Parameters
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 func Build(buildUrl string, param model.BuildParam, username string, token string) error {

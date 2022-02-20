@@ -91,16 +91,49 @@ gokins deploy 1005`)
 				return
 			}
 			// 查询任务状态
-			buildParams, err := job.QueryCurrentJobBuildParam(queryStatusUrl, username, token)
+			status, err := job.QueryBuildStatus(queryStatusUrl, username, token)
+			if err != nil {
+				fmt.Println("查询任务状态失败")
+				return
+			}
+			statusText := job.ParseBuildStatus(status)
+			if statusText == job.Building {
+				buildParams := job.ParseCurrentJobBuildParam(status)
+				// 判断构建参数是否相等
+				if buildParamIsEquals(buildParams, task.Params) {
+					fmt.Println("当前任务已发起构建，正在构建中")
+					return
+				}
+				fmt.Println("当前有任务正在构建，排队等待中，请稍后...")
+			}
+			switch statusText {
+			case job.Building:
+
+			}
 
 			fmt.Println(job.QueryBuildStatus(queryStatusUrl, username, token))
-			fmt.Println(buildParams)
 			fmt.Println(username, token)
 			fmt.Println(buildUrl)
 			fmt.Println(queryStatusUrl)
 			//job.Build()
 		}
 	},
+}
+
+// 判断构建参数是否相等
+func buildParamIsEquals(a, b []model.BuildParamItem) bool {
+	if (a == nil) != (b == nil) {
+		return false
+	}
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func init() {
