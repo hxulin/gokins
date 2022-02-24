@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gokins/model"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -79,6 +81,10 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 		return err, ""
 	}
 	defer resp.Body.Close()
+	status := resp.StatusCode
+	if status != http.StatusCreated {
+		return errors.New("failed to start job, http status: " + strconv.Itoa(status)), ""
+	}
 	location := resp.Header["Location"][0]
 	splitUrl := strings.Split(location, "/")
 	return nil, splitUrl[len(splitUrl)-2]

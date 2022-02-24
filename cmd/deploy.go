@@ -112,7 +112,11 @@ gokins deploy 1005`)
 					}
 				}
 			}
-			err, _ = job.Build(baseUrl, task.Name, task.Params, username, token)
+			err, queueId := job.Build(baseUrl, task.Name, task.Params, username, token)
+			if err != nil {
+				fmt.Println("任务部署失败，" + err.Error())
+				continue
+			}
 
 			fmt.Println(err)
 
