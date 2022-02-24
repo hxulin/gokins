@@ -1,6 +1,7 @@
 package job
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // Building 任务构建中
@@ -23,7 +25,8 @@ const (
 )
 
 // QueryBuildStatus 查询任务的构建状态
-func QueryBuildStatus(queryUrl string, username string, token string) (model.BuildStatus, error) {
+func QueryBuildStatus(baseUrl, jobName, username, token string) (model.BuildStatus, error) {
+	queryUrl := baseUrl + "job/" + jobName + "/lastBuild/api/json"
 	buildStatus, err := queryBuildStatus(queryUrl, username, token)
 	if err != nil {
 		return model.BuildStatus{}, err
@@ -49,24 +52,26 @@ func ParseCurrentJobBuildParam(buildStatus model.BuildStatus) []model.BuildParam
 	return nil
 }
 
-func Build(buildUrl string, param model.BuildParam, username string, token string) error {
-	client := &http.Client{}
-	//param := buildParam{Parameter: []buildParamItem{
-	//	{"branch", "dev1.1.6"},
-	//	{"MAVEN_CMD", "clean install"},
-	//	{"project_name", "dxm-assist"},
-	//	{"namespace", "--spring.profiles.active=test"},
-	//	{"dest_ip", "172.19.170.126"},
-	//	{"group", "rdts/backend"},
-	//}}
-	paramStr, _ := json.Marshal(param)
-	fmt.Println(string(paramStr))
-	req, err := http.NewRequest(http.MethodPost, buildUrl, strings.NewReader("json="+encodeURIComponent(string(paramStr))))
+func Build(baseUrl, jobName string, params []model.BuildParamItem, username, token string) error {
+	buildUrl := baseUrl + "job/" + jobName + "/build"
+	if len(params) > 0 {
+		query := url.Values{}
+		for _, param := range params {
+			query.Add(param.Name, fmt.Sprintf("%v", param.Value))
+		}
+		buildUrl = baseUrl + "job/" + jobName + "/buildWithParameters?" + query.Encode()
+	}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr, Timeout: time.Second * 30}
+	req, err := http.NewRequest(http.MethodPost, buildUrl, strings.NewReader(string([]byte{})))
 	if err != nil {
 		return err
 	}
-	auth := []byte(username + ":" + token)
-	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString(auth))
+	//auth := []byte(username + ":" + token)
+	//req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString(auth))
+	req.SetBasicAuth(username, token)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	_, err = client.Do(req)
 	if err != nil {

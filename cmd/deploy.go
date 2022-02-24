@@ -72,8 +72,6 @@ gokins deploy 1005`)
 			if !strings.HasSuffix(baseUrl, "/") {
 				baseUrl += "/"
 			}
-			buildUrl := baseUrl + "job/" + task.Name + "/build"
-			queryStatusUrl := baseUrl + "job/" + task.Name + "/lastBuild/api/json"
 			// 读取用户名和token配置信息
 			authConfig, err := util.ReadAuthInfo()
 			if err != nil {
@@ -91,7 +89,7 @@ gokins deploy 1005`)
 				return
 			}
 			// 查询任务状态
-			status, err := job.QueryBuildStatus(queryStatusUrl, username, token)
+			status, err := job.QueryBuildStatus(baseUrl, task.Name, username, token)
 			if err != nil {
 				fmt.Println("查询任务状态失败")
 				return
@@ -101,11 +99,23 @@ gokins deploy 1005`)
 				buildParams := job.ParseCurrentJobBuildParam(status)
 				// 判断构建参数是否相等
 				if buildParamIsEquals(buildParams, task.Params) {
-					fmt.Println("当前任务已发起构建，正在构建中")
-					return
+					fmt.Print("其他终端正在部署此任务，是否继续本次部署？(y/N)：")
+					in := bufio.NewReader(os.Stdin)
+					ackBytes, _, err := in.ReadLine()
+					if err != nil {
+						continue
+					}
+					// 121 表示用户输入字符 y
+					if len(ackBytes) == 0 || ackBytes[0] != 121 {
+						fmt.Println("用户取消部署操作，任务ID为：" + jobId)
+						continue
+					}
 				}
-				fmt.Println("当前有任务正在构建，排队等待中，请稍后...")
 			}
+			err := job.Build(baseUrl, task.Name, task.Params, username, token)
+
+			fmt.Println(statusText)
+			fmt.Println("有其他任务正在部署，排队等待中，请稍候...")
 			switch statusText {
 			case job.Building:
 
