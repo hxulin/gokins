@@ -52,7 +52,7 @@ func ParseCurrentJobBuildParam(buildStatus model.BuildStatus) []model.BuildParam
 	return nil
 }
 
-func Build(baseUrl, jobName string, params []model.BuildParamItem, username, token string) error {
+func Build(baseUrl, jobName string, params []model.BuildParamItem, username, token string) (error, string) {
 	buildUrl := baseUrl + "job/" + jobName + "/build"
 	if len(params) > 0 {
 		query := url.Values{}
@@ -67,17 +67,20 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 	client := &http.Client{Transport: tr, Timeout: time.Second * 30}
 	req, err := http.NewRequest(http.MethodPost, buildUrl, strings.NewReader(string([]byte{})))
 	if err != nil {
-		return err
+		return err, ""
 	}
 	//auth := []byte(username + ":" + token)
 	//req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString(auth))
 	req.SetBasicAuth(username, token)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	_, err = client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return err, ""
 	}
-	return nil
+	defer resp.Body.Close()
+	location := resp.Header["Location"][0]
+	splitUrl := strings.Split(location, "/")
+	return nil, splitUrl[len(splitUrl)-2]
 }
 
 // URL 参数编码，实现和 JS 通用

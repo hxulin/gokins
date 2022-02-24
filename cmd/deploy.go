@@ -112,7 +112,9 @@ gokins deploy 1005`)
 					}
 				}
 			}
-			err := job.Build(baseUrl, task.Name, task.Params, username, token)
+			err, _ = job.Build(baseUrl, task.Name, task.Params, username, token)
+
+			fmt.Println(err)
 
 			fmt.Println(statusText)
 			fmt.Println("有其他任务正在部署，排队等待中，请稍候...")
@@ -121,10 +123,10 @@ gokins deploy 1005`)
 
 			}
 
-			fmt.Println(job.QueryBuildStatus(queryStatusUrl, username, token))
-			fmt.Println(username, token)
-			fmt.Println(buildUrl)
-			fmt.Println(queryStatusUrl)
+			//fmt.Println(job.QueryBuildStatus(queryStatusUrl, username, token))
+			//fmt.Println(username, token)
+			//fmt.Println(buildUrl)
+			//fmt.Println(queryStatusUrl)
 			//job.Build()
 		}
 	},
