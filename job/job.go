@@ -52,6 +52,7 @@ func ParseCurrentJobBuildParam(buildStatus model.BuildStatus) []model.BuildParam
 	return nil
 }
 
+// Build 启动任务构建
 func Build(baseUrl, jobName string, params []model.BuildParamItem, username, token string) error {
 	buildUrl := baseUrl + "job/" + jobName + "/build"
 	if len(params) > 0 {
@@ -87,7 +88,7 @@ func encodeURIComponent(str string) string {
 }
 
 // 查询任务构建状态
-func queryBuildStatus(queryUrl string, username string, token string) (model.BuildStatus, error) {
+func queryBuildStatus(queryUrl, username, token string) (model.BuildStatus, error) {
 	buildStatus := model.BuildStatus{}
 	client := http.Client{}
 	req, err := http.NewRequest(http.MethodGet, queryUrl, nil)
