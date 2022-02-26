@@ -137,9 +137,13 @@ gokins deploy 1005`)
 					if statusText == job.Building {
 						loading("正在部署当前任务，请稍候...", 29)
 						ln = true
+					} else if statusText == job.Success {
+						back := strings.Repeat("\b", 29)
+						fmt.Println(back + "✔ 当前任务部署完成 -> SUCCESS")
+						break
 					} else {
 						back := strings.Repeat("\b", 29)
-						fmt.Println(back + "✔ 当前任务部署完成 -> " + statusText)
+						fmt.Println(back + "✘ 当前任务部署失败 -> " + statusText)
 						break
 					}
 				} else if status.QueueId > queueId {
