@@ -67,7 +67,7 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	client := &http.Client{Transport: tr, Timeout: time.Second * 30}
+	client := &http.Client{Transport: tr, Timeout: time.Second * 10}
 	req, err := http.NewRequest(http.MethodPost, buildUrl, strings.NewReader(string([]byte{})))
 	if err != nil {
 		return -1, err
@@ -93,7 +93,11 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 // 查询任务构建状态
 func queryBuildStatus(queryUrl, username, token string) (model.BuildStatus, error) {
 	buildStatus := model.BuildStatus{}
-	client := http.Client{}
+	//client := http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr, Timeout: time.Second * 10}
 	req, err := http.NewRequest(http.MethodGet, queryUrl, nil)
 	if err != nil {
 		return buildStatus, err
