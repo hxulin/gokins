@@ -44,6 +44,7 @@ type BuildParam struct {
 	Parameter []BuildParamItem `json:"parameter"`
 }
 
+// Action 构建信息
 type Action struct {
 	ClassName  string           `json:"_class"`
 	Parameters []BuildParamItem `json:"parameters"`
@@ -52,6 +53,7 @@ type Action struct {
 // BuildStatus 部署状态
 type BuildStatus struct {
 	Actions  []Action `json:"actions"`
+	QueueId  int      `json:"queueId"`
 	Building bool     `json:"building"`
 	Result   string   `json:"result"`
 }

@@ -55,7 +55,7 @@ func ParseCurrentJobBuildParam(buildStatus model.BuildStatus) []model.BuildParam
 }
 
 // Build 启动任务构建
-func Build(baseUrl, jobName string, params []model.BuildParamItem, username, token string) (error, string) {
+func Build(baseUrl, jobName string, params []model.BuildParamItem, username, token string) (int, error) {
 	buildUrl := baseUrl + "job/" + jobName + "/build"
 	if len(params) > 0 {
 		query := url.Values{}
@@ -70,7 +70,7 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 	client := &http.Client{Transport: tr, Timeout: time.Second * 30}
 	req, err := http.NewRequest(http.MethodPost, buildUrl, strings.NewReader(string([]byte{})))
 	if err != nil {
-		return err, ""
+		return -1, err
 	}
 	//auth := []byte(username + ":" + token)
 	//req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString(auth))
@@ -78,22 +78,16 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
 	if err != nil {
-		return err, ""
+		return -1, err
 	}
 	defer resp.Body.Close()
 	status := resp.StatusCode
 	if status != http.StatusCreated {
-		return errors.New("failed to start job, http status: " + strconv.Itoa(status)), ""
+		return -1, errors.New("failed to start job, http status: " + strconv.Itoa(status))
 	}
 	location := resp.Header["Location"][0]
 	splitUrl := strings.Split(location, "/")
-	return nil, splitUrl[len(splitUrl)-2]
-}
-
-// URL 参数编码，实现和 JS 通用
-func encodeURIComponent(str string) string {
-	r := url.QueryEscape(str)
-	return strings.Replace(r, "+", "%20", -1)
+	return strconv.Atoi(splitUrl[len(splitUrl)-2])
 }
 
 // 查询任务构建状态

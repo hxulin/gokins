@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var deployCmd = &cobra.Command{
@@ -112,28 +113,62 @@ gokins deploy 1005`)
 					}
 				}
 			}
-			err, queueId := job.Build(baseUrl, task.Name, task.Params, username, token)
+			queueId, err := job.Build(baseUrl, task.Name, task.Params, username, token)
 			if err != nil {
-				fmt.Println("任务部署失败，" + err.Error())
+				fmt.Println("任务部署失败：" + err.Error())
 				continue
 			}
-
-			fmt.Println(err)
-
-			fmt.Println(statusText)
-			fmt.Println("有其他任务正在部署，排队等待中，请稍候...")
-			switch statusText {
-			case job.Building:
-
+			// 是否排队等待过、是否需要Println
+			queue, ln := false, false
+			for {
+				status, err = job.QueryBuildStatus(baseUrl, task.Name, username, token)
+				if status.QueueId < queueId {
+					queue = true
+					loading("有其他任务正在部署，排队等待中，请稍候...", 43)
+					ln = true
+				} else if status.QueueId == queueId {
+					if queue {
+						queue = false
+						back := strings.Repeat("\b", 43)
+						fmt.Println(back + "✔ 其他任务部署完成。                       ")
+						ln = false
+					}
+					statusText = job.ParseBuildStatus(status)
+					if statusText == job.Building {
+						loading("正在部署当前任务，请稍候...", 29)
+						ln = true
+					} else {
+						back := strings.Repeat("\b", 29)
+						fmt.Println(back + "✔ 当前任务部署完成 -> " + statusText)
+						break
+					}
+				} else if status.QueueId > queueId {
+					if ln {
+						fmt.Println()
+					}
+					fmt.Println("✘ 部署结果查询失败，请登录Web页面查看。")
+					break
+				}
 			}
-
-			//fmt.Println(job.QueryBuildStatus(queryStatusUrl, username, token))
-			//fmt.Println(username, token)
-			//fmt.Println(buildUrl)
-			//fmt.Println(queryStatusUrl)
-			//job.Build()
 		}
 	},
+}
+
+// 加载中提示
+func loading(text string, backChar int) {
+	interval := time.Duration(125) * time.Millisecond
+	back := strings.Repeat("\b", backChar)
+	fmt.Print(back + "─ " + text)
+	for i := 0; i < 2; i++ {
+		time.Sleep(interval)
+		fmt.Print(back + "\\ " + text)
+		time.Sleep(interval)
+		fmt.Print(back + "| " + text)
+		time.Sleep(interval)
+		fmt.Print(back + "/ " + text)
+		time.Sleep(interval)
+		fmt.Print(back + "─ " + text)
+	}
 }
 
 // 判断构建参数是否相等
