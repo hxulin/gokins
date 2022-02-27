@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"gokins/model"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -22,8 +23,8 @@ import (
 const (
 	Building = "BUILDING"
 	Success  = "SUCCESS"
-	Failure  = "FAILURE"
-	Aborted  = "ABORTED"
+	//Failure  = "FAILURE"
+	//Aborted  = "ABORTED"
 )
 
 // QueryBuildStatus 查询任务的构建状态
@@ -68,7 +69,7 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr, Timeout: time.Second * 10}
-	req, err := http.NewRequest(http.MethodPost, buildUrl, strings.NewReader(string([]byte{})))
+	req, err := http.NewRequest(http.MethodPost, buildUrl, nil)
 	if err != nil {
 		return -1, err
 	}
@@ -80,7 +81,9 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 	if err != nil {
 		return -1, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	status := resp.StatusCode
 	if status != http.StatusCreated {
 		return -1, errors.New("failed to start job, http status: " + strconv.Itoa(status))
@@ -111,7 +114,9 @@ func queryBuildStatus(queryUrl, username, token string) (model.BuildStatus, erro
 	if err != nil {
 		return buildStatus, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return buildStatus, err

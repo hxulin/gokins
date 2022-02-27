@@ -1,6 +1,7 @@
 package util
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"gokins/model"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 )
 
 const (
@@ -108,8 +110,16 @@ func ReadConfigInfo() (model.SysConfig, error) {
 
 // LoadConfig 加载配置文件
 func LoadConfig(url string) error {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr, Timeout: time.Second * 10}
 	// 发起 http Get 请求读取远程配置文件
-	resp, err := http.Get(url)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
