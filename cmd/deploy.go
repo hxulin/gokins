@@ -124,26 +124,26 @@ gokins deploy 1005`)
 				status, err = job.QueryBuildStatus(baseUrl, task.Name, username, token)
 				if status.QueueId < queueId {
 					queue = true
-					loading("有其他任务正在部署，排队等待中，请稍候...", 43)
+					loading("有其他任务正在部署，排队等待中，请稍候...")
 					ln = true
 				} else if status.QueueId == queueId {
 					if queue {
 						queue = false
-						back := strings.Repeat("\b", 43)
-						fmt.Println(back + "✔ 其他任务部署完成。                       ")
+						fmt.Print("\033[2K")
+						fmt.Println("\r✔ 其他任务部署完成。")
 						ln = false
 					}
 					statusText = job.ParseBuildStatus(status)
 					if statusText == job.Building {
-						loading("正在部署当前任务，请稍候...", 29)
+						loading("正在部署当前任务，请稍候...")
 						ln = true
 					} else if statusText == job.Success {
 						back := strings.Repeat("\b", 29)
 						fmt.Println(back + "✔ 当前任务部署完成 -> SUCCESS")
 						break
 					} else {
-						back := strings.Repeat("\b", 29)
-						fmt.Println(back + "✘ 当前任务部署失败 -> " + statusText)
+						fmt.Print("\033[2K")
+						fmt.Println("\r✘ 当前任务部署失败 -> " + statusText)
 						break
 					}
 				} else if status.QueueId > queueId {
@@ -159,19 +159,19 @@ gokins deploy 1005`)
 }
 
 // 加载中提示
-func loading(text string, backChar int) {
+func loading(text string) {
 	interval := time.Duration(125) * time.Millisecond
-	back := strings.Repeat("\b", backChar)
-	fmt.Print(back + "─ " + text)
+	fmt.Print("\033[2K")
+	fmt.Print("\r─ " + text)
 	for i := 0; i < 2; i++ {
 		time.Sleep(interval)
-		fmt.Print(back + "\\ " + text)
+		fmt.Print("\r\\ " + text)
 		time.Sleep(interval)
-		fmt.Print(back + "| " + text)
+		fmt.Print("\r| " + text)
 		time.Sleep(interval)
-		fmt.Print(back + "/ " + text)
+		fmt.Print("\r/ " + text)
 		time.Sleep(interval)
-		fmt.Print(back + "─ " + text)
+		fmt.Print("\r─ " + text)
 	}
 }
 
