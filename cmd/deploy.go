@@ -138,8 +138,8 @@ gokins deploy 1005`)
 						loading("正在部署当前任务，请稍候...")
 						ln = true
 					} else if statusText == job.Success {
-						back := strings.Repeat("\b", 29)
-						fmt.Println(back + "✔ 当前任务部署完成 -> SUCCESS")
+						fmt.Print("\033[2K")
+						fmt.Println("\r✔ 当前任务部署完成 -> SUCCESS")
 						break
 					} else {
 						fmt.Print("\033[2K")
