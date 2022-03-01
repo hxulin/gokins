@@ -27,14 +27,60 @@ const (
 	//Aborted  = "ABORTED"
 )
 
-// QueryBuildStatus 查询任务的构建状态
-func QueryBuildStatus(baseUrl, jobName, username, token string) (model.BuildStatus, error) {
+// QueryLastBuildStatus 查询任务的上一次构建状态
+func QueryLastBuildStatus(baseUrl, jobName, username, token string) (model.BuildStatus, error) {
 	queryUrl := baseUrl + "job/" + jobName + "/lastBuild/api/json"
 	buildStatus, err := queryBuildStatus(queryUrl, username, token)
 	if err != nil {
 		return model.BuildStatus{}, err
 	}
 	return buildStatus, nil
+}
+
+// QueryBuildStatus 查询任务构建状态
+func QueryBuildStatus(baseUrl, jobName string, number int, username, token string) (model.BuildStatus, error) {
+	queryUrl := baseUrl + "job/" + jobName + "/" + strconv.Itoa(number) + "/api/json"
+	buildStatus, err := queryBuildStatus(queryUrl, username, token)
+	if err != nil {
+		return model.BuildStatus{}, err
+	}
+	return buildStatus, nil
+}
+
+// GetQueueInfo 获取队列信息
+func GetQueueInfo(baseUrl string, queueId int, username, token string) (model.QueueInfo, error) {
+	var queueInfo model.QueueInfo
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		//Proxy:           http.ProxyFromEnvironment,
+	}
+	client := &http.Client{Transport: tr, Timeout: time.Second * 10}
+	req, err := http.NewRequest(http.MethodPost, baseUrl+"queue/item/"+strconv.Itoa(queueId)+"/api/json", nil)
+	if err != nil {
+		return queueInfo, err
+	}
+	req.SetBasicAuth(username, token)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+	if err != nil {
+		return queueInfo, err
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+	status := resp.StatusCode
+	if status != http.StatusOK {
+		return queueInfo, errors.New("failed to get queue details, http status: " + strconv.Itoa(status))
+	}
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return queueInfo, err
+	}
+	err = json.Unmarshal(respBytes, &queueInfo)
+	if err != nil {
+		return queueInfo, err
+	}
+	return queueInfo, nil
 }
 
 // ParseBuildStatus 解析任务的构建状态
@@ -67,6 +113,7 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 	}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		//Proxy:           http.ProxyFromEnvironment,
 	}
 	client := &http.Client{Transport: tr, Timeout: time.Second * 10}
 	req, err := http.NewRequest(http.MethodPost, buildUrl, nil)
@@ -96,9 +143,9 @@ func Build(baseUrl, jobName string, params []model.BuildParamItem, username, tok
 // 查询任务构建状态
 func queryBuildStatus(queryUrl, username, token string) (model.BuildStatus, error) {
 	buildStatus := model.BuildStatus{}
-	//client := http.Client{}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		//Proxy:           http.ProxyFromEnvironment,
 	}
 	client := &http.Client{Transport: tr, Timeout: time.Second * 10}
 	req, err := http.NewRequest(http.MethodGet, queryUrl, nil)
@@ -117,6 +164,10 @@ func queryBuildStatus(queryUrl, username, token string) (model.BuildStatus, erro
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(resp.Body)
+	status := resp.StatusCode
+	if status != http.StatusOK {
+		return buildStatus, errors.New("failed to get job details, http status: " + strconv.Itoa(status))
+	}
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return buildStatus, err

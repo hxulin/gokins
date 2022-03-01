@@ -53,7 +53,15 @@ type Action struct {
 // BuildStatus 部署状态
 type BuildStatus struct {
 	Actions  []Action `json:"actions"`
-	QueueId  int      `json:"queueId"`
 	Building bool     `json:"building"`
 	Result   string   `json:"result"`
+}
+
+// QueueInfo 队列信息
+type QueueInfo struct {
+	Blocked    bool `json:"blocked"`
+	Executable struct {
+		Number int    `json:"number"`
+		URL    string `json:"url"`
+	} `json:"executable"`
 }

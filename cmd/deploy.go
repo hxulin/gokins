@@ -90,9 +90,9 @@ gokins deploy 1005`)
 				return
 			}
 			// 查询任务状态
-			status, err := job.QueryBuildStatus(baseUrl, task.Name, username, token)
+			status, err := job.QueryLastBuildStatus(baseUrl, task.Name, username, token)
 			if err != nil {
-				fmt.Println("查询任务状态失败")
+				fmt.Println("查询任务最近一次部署状态失败")
 				return
 			}
 			statusText := job.ParseBuildStatus(status)
@@ -115,42 +115,65 @@ gokins deploy 1005`)
 			}
 			queueId, err := job.Build(baseUrl, task.Name, task.Params, username, token)
 			if err != nil {
-				fmt.Println("任务部署失败：" + err.Error())
+				fmt.Println("✘ 任务部署失败：" + err.Error())
 				continue
 			}
-			// 是否排队等待过、是否需要Println
-			queue, ln := false, false
+			// 查询重试次数
+			retry := 0
+			number := -1
 			for {
-				status, err = job.QueryBuildStatus(baseUrl, task.Name, username, token)
-				if status.QueueId < queueId {
-					queue = true
-					loading("有其他任务正在部署，排队等待中，请稍候...")
-					ln = true
-				} else if status.QueueId == queueId {
-					if queue {
-						queue = false
+				// 查询执行队列状态信息
+				queueInfo, err := job.GetQueueInfo(baseUrl, queueId, username, token)
+				if err != nil {
+					retry += 1
+					if retry >= 5 {
 						fmt.Print("\033[2K")
-						fmt.Println("\r✔ 其他任务部署完成。")
-						ln = false
-					}
-					statusText = job.ParseBuildStatus(status)
-					if statusText == job.Building {
-						loading("正在部署当前任务，请稍候...")
-						ln = true
-					} else if statusText == job.Success {
-						fmt.Print("\033[2K")
-						fmt.Println("\r✔ 当前任务部署完成 -> SUCCESS")
-						break
-					} else {
-						fmt.Print("\033[2K")
-						fmt.Println("\r✘ 当前任务部署失败 -> " + statusText)
+						fmt.Println("\r✘ 查询执行队列状态失败。")
 						break
 					}
-				} else if status.QueueId > queueId {
-					if ln {
-						fmt.Println()
+					time.Sleep(time.Duration(100) * time.Millisecond)
+					continue
+				} else {
+					retry = 0
+				}
+				if !queueInfo.Blocked && queueInfo.Executable.URL != "" {
+					number = queueInfo.Executable.Number
+					fmt.Print("\033[2K")
+					fmt.Println("\r✔ 任务调度器初始化完成。")
+					break
+				} else {
+					loading("任务已提交，等待调度器执行，请稍候...")
+				}
+			}
+			if number == -1 {
+				continue
+			}
+			// 重置重试次数
+			retry = 0
+			for {
+				status, err = job.QueryBuildStatus(baseUrl, task.Name, number, username, token)
+				if err != nil {
+					retry += 1
+					if retry >= 3 {
+						fmt.Print("\033[2K")
+						fmt.Println("\r✘ 部署结果查询失败，请登录web页面查看")
+						break
 					}
-					fmt.Println("✘ 部署结果查询失败，请登录Web页面查看。")
+					time.Sleep(time.Duration(1) * time.Second)
+					continue
+				} else {
+					retry = 0
+				}
+				statusText = job.ParseBuildStatus(status)
+				if statusText == job.Building {
+					loading("正在部署当前任务，请稍候...")
+				} else if statusText == job.Success {
+					fmt.Print("\033[2K")
+					fmt.Println("\r✔ 任务ID: " + jobId + " 部署完成 -> SUCCESS")
+					break
+				} else {
+					fmt.Print("\033[2K")
+					fmt.Println("\r✘ 任务ID: " + jobId + " 部署失败 -> " + statusText)
 					break
 				}
 			}
