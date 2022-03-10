@@ -30,8 +30,8 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gokins",
-	Short: "A brief description of your application",
-	Long: `欢迎使用 gokins, 一个基于 Jenkins api 实现快速部署的工具。
+	Short: "Jenkins 命令行部署工具",
+	Long: `欢迎使用 gokins, 一个基于 Jenkins api 实现快速部署的命令行工具。
 
 项目地址：
 https://gitee.com/hxulin/gokins
