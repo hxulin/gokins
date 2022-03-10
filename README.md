@@ -7,14 +7,14 @@
 ### Linux
 
 ```bash
-sudo wget https://github.com/hxulin/gokins/releases/download/v1.0.0/gokins-1.0.0-linux-amd64 -O /usr/local/bin/gokins
+sudo wget https://github.com/hxulin/gokins/releases/download/v1.0.1/gokins-1.0.1-linux-amd64 -O /usr/local/bin/gokins
 sudo chmod +x /usr/local/bin/gokins
 ```
 
 ### OS X
 
 ```bash
-sudo curl -Lo /usr/local/bin/gokins https://github.com/hxulin/gokins/releases/download/v1.0.0/gokins-1.0.0-darwin-amd64
+sudo curl -Lo /usr/local/bin/gokins https://github.com/hxulin/gokins/releases/download/v1.0.1/gokins-1.0.1-darwin-amd64
 sudo chmod +x /usr/local/bin/gokins
 ```
 
