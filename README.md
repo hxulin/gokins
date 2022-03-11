@@ -41,6 +41,12 @@ gokins load http://cdn.huangxulin.cn/gokins/config.yaml
 
 加载的配置信息会保存到 `$Home/.gokins/config.yaml` 文件中，请根据实际需求修改配置参数。
 
+### 查看任务列表信息
+
+```bash
+gokins ls
+```
+
 ### 执行部署操作
 
 ```bash
