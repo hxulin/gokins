@@ -24,6 +24,7 @@ type Job struct {
 	Ack     bool             `yaml:"ack"`
 	AckText string           `yaml:"ack-text"`
 	Params  []BuildParamItem `yaml:"params"`
+	Columns []BuildParamItem `yaml:"columns"`
 }
 
 // Gokins gokins 配置
