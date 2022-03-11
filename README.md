@@ -44,6 +44,6 @@ gokins load http://cdn.huangxulin.cn/gokins/config.yaml
 ### 执行部署操作
 
 ```bash
-gokins deploy 1005
+gokins run 1005
 ```
 

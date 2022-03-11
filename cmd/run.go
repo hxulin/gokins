@@ -13,15 +13,15 @@ import (
 	"time"
 )
 
-var deployCmd = &cobra.Command{
-	Use:   "deploy",
+var runCmd = &cobra.Command{
+	Use:   "run",
 	Short: "执行任务",
 	Long: `执行某一个任务，后面接任务ID参数，如：
-gokins deploy 1005`,
+gokins run 1005`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			fmt.Println(`deploy 命令后面需要指定任务ID，例如：
-gokins deploy 1005`)
+			fmt.Println(`run 命令后面需要指定任务ID，例如：
+gokins run 1005`)
 			return
 		}
 		// 读取配置文件
@@ -215,5 +215,5 @@ func buildParamIsEquals(a, b []model.BuildParamItem) bool {
 }
 
 func init() {
-	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(runCmd)
 }
