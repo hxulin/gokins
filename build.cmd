@@ -1,7 +1,7 @@
 @echo off
 
 REM 设置版本号
-set version=1.0.1
+set version=2.0.0
 
 REM windows amd64
 go build
