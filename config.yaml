@@ -13,3 +13,17 @@ gokins:
           value: master
         - name: maven_cmd
           value: "clean install"
+      # gokins ls 命令显示的提示信息
+      columns:
+        - name: id
+          value: 1005
+        - name: project
+          value: "项目名称"
+        - name: branch
+          value: master
+        - name: env
+          value: test
+        - name: ack
+          value: true
+        - name: description
+          value: "任务描述信息、备注等"
