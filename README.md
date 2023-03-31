@@ -53,3 +53,14 @@ gokins ls
 gokins run 1005
 ```
 
+## 在 Shell 中使用
+
+```sh
+#!/bin/bash
+
+result=`gokins run 1005`
+if [[ $result =~ .*SUCCESS.* ]]; then
+  echo '部署成功'
+fi
+```
+
